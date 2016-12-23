@@ -1,0 +1,7 @@
+[package]
+name = "amd64_asm_parse"
+version = "0.1.0"
+authors = ["valarauca <codylaeder@gmail.com>"]
+
+[dependencies]
+nom = "2.0.0"
