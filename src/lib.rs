@@ -224,8 +224,6 @@ pub fn parse_register<'a>(i: &'a [u8]) -> IResult<&'a [u8], Register> {
                                 b"xmm27" => IResult::Done(&i[3..], Register::xmm27),
                                 b"xmm28" => IResult::Done(&i[3..], Register::xmm28),
                                 b"xmm29" => IResult::Done(&i[3..], Register::xmm29),
-                                b"xmm30" => IResult::Done(&i[3..], Register::xmm30),
-                                b"xmm31" => IResult::Done(&i[3..], Register::xmm31),
                                 _ => IResult::Done(&i[4..], Register::xmm2)
                             }}else{
                                 IResult::Done(&i[4..], Register::xmm2)
@@ -279,8 +277,6 @@ pub fn parse_register<'a>(i: &'a [u8]) -> IResult<&'a [u8], Register> {
                                 b"ymm27" => IResult::Done(&i[3..], Register::ymm27),
                                 b"ymm28" => IResult::Done(&i[3..], Register::ymm28),
                                 b"ymm29" => IResult::Done(&i[3..], Register::ymm29),
-                                b"ymm30" => IResult::Done(&i[3..], Register::ymm30),
-                                b"ymm31" => IResult::Done(&i[3..], Register::ymm31),
                                 _ => IResult::Done(&i[4..], Register::ymm2)
                             }}else{
                                 IResult::Done(&i[4..], Register::ymm2)
@@ -334,8 +330,6 @@ pub fn parse_register<'a>(i: &'a [u8]) -> IResult<&'a [u8], Register> {
                                 b"zmm27" => IResult::Done(&i[3..], Register::zmm27),
                                 b"zmm28" => IResult::Done(&i[3..], Register::zmm28),
                                 b"zmm29" => IResult::Done(&i[3..], Register::zmm29),
-                                b"zmm30" => IResult::Done(&i[3..], Register::zmm30),
-                                b"zmm31" => IResult::Done(&i[3..], Register::zmm31),
                                 _ => IResult::Done(&i[4..], Register::zmm2)
                             }}else{
                                 IResult::Done(&i[4..], Register::zmm2)
@@ -622,36 +616,13 @@ fn to_val<'a>(x: &'a [u8]) -> IResult<&'a [u8],u64> {
     }
 }
 
-named!(pub pointer<Pointer>, alt!(
-    chain!(
+named!(pointer<Pointer>,chain!(
         tag!("[")~
         take_while!(nom::is_space)?~
         reg: parse_register~
         take_while!(nom::is_space)?~
         tag!("]"),
-        || Pointer::Simple(reg)) |
-    chain!(
-        tag!("[")~
-        take_while!(nom::is_space)?~
-        reg: parse_register~
-        take_while!(nom::is_space)?~
-        tag!("+")~
-        take_while!(nom::is_space)?~
-        val: to_val~
-        take_while!(nom::is_space)?~
-        tag!("]"),
-        ||Pointer::Operation(reg,PointerOp::AddCon(val))) |
-    chain!(
-        tag!("[")~
-        take_while!(nom::is_space)?~
-        reg: parse_register~
-        take_while!(nom::is_space)?~
-        tag!("-")~
-        take_while!(nom::is_space)?~
-        val: to_val~
-        take_while!(nom::is_space)?~
-        tag!("]"),
-        ||Pointer::Operation(reg,PointerOp::SubCon(val)))
+        || Pointer::Simple(reg)
 ));
 #[test]
 fn test_pointer() {
@@ -662,12 +633,4 @@ fn test_pointer() {
     let dut = b"[rax]";
     let (_,val) = pointer(dut).unwrap();
     assert_eq!(val, Pointer::Simple(Register::rax));
-    //register before value
-    let dut = b"[rdx+10]";
-    let (_,val) = pointer(dut).unwrap();
-    assert_eq!(val, Pointer::Operation(Register::rdx, PointerOp::AddCon(10)));
-    //register before value
-    let dut = b"[r11-19]";
-    let (_,val) = pointer(dut).unwrap();
-    assert_eq!(val, Pointer::Operation(Register::r11, PointerOp::SubCon(19)));
 }
